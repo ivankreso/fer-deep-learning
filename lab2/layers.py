@@ -305,9 +305,10 @@ class L2Regularizer():
   def backward_params(self):
     """
     Returns:
-      Gradient of the L2 loss with respect to the weights.
+      Gradient of the L2 loss with respect to the regularized weights.
     """
     # TODO
+    grad_weights = ...
     return [[self.weights, grad_weights], self.name]
 
 
@@ -324,8 +325,8 @@ class RegularizedLoss():
       loss_val += loss.forward()
     return loss_val
 
-  def backward_inputs(self):
-    return self.data_loss.backward_inputs()
+  def backward_inputs(self, x, y):
+    return self.data_loss.backward_inputs(x, y)
 
   def backward_params(self):
     grads = []

@@ -13,9 +13,9 @@ def forward_pass(net, inputs):
   return output
 
 
-def backward_pass(net, loss):
+def backward_pass(net, loss, x, y):
   grads = []
-  grad_out = loss.backward_inputs()
+  grad_out = loss.backward_inputs(x, y)
   if loss.has_params:
     grads += loss.backward_params()
   for layer in reversed(net):
@@ -86,7 +86,7 @@ def train(train_x, train_y, valid_x, valid_y, net, loss, config):
       yp = np.argmax(logits, 1)
       yt = np.argmax(batch_y, 1)
       cnt_correct += (yp == yt).sum()
-      grads = backward_pass(net, loss)
+      grads = backward_pass(net, loss, logits, batch_y)
       sgd_update_params(grads, solver_config)
 
       if i % 5 == 0:
