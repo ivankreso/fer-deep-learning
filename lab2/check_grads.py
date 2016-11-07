@@ -9,6 +9,8 @@ def eval_numerical_gradient(f, x, df, h=1e-5):
   """
   Evaluate a numeric gradient for a function that accepts a numpy
   array and returns a numpy array.
+  - f should be a function that takes a single argument
+  - x is the point (numpy array) to evaluate the gradient at
   """
   grad = np.zeros_like(x)
   it = np.nditer(x, flags=['multi_index'], op_flags=['readwrite'])
@@ -17,16 +19,26 @@ def eval_numerical_gradient(f, x, df, h=1e-5):
     
     oldval = x[ix]
     x[ix] = oldval + h
+    # evaluate f(x + h)
     pos = f(x).copy()
     x[ix] = oldval - h
+    # evaluate f(x - h)
     neg = f(x).copy()
     x[ix] = oldval
     
+    # compute the partial derivative with centered formula
     grad[ix] = np.sum((pos - neg) * df) / (2 * h)
+    # step to next dimension
     it.iternext()
   return grad
 
 def grad_check(layer, x, grad_out):
+  """
+  Args:
+    layer: Layer object
+    x: ndarray tensor input data
+    grad_out: ndarray tensor gradient from the next layer
+  """
   grad_x_num = eval_numerical_gradient(layer.forward, x, grad_out)
   grad_x = layer.backward_inputs(grad_out)
   print("Relative error = ", rel_error(grad_x_num, grad_x))
