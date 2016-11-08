@@ -32,7 +32,7 @@ def eval_numerical_gradient(f, x, df, h=1e-5):
     it.iternext()
   return grad
 
-def grad_check(layer, x, grad_out):
+def check_grad_inputs(layer, x, grad_out):
   """
   Args:
     layer: Layer object
@@ -44,29 +44,59 @@ def grad_check(layer, x, grad_out):
   print("Relative error = ", rel_error(grad_x_num, grad_x))
   print("Error norm = ", np.linalg.norm(grad_x_num - grad_x))
 
+def check_grad_params(layer, x, w, b, grad_out):
+  """
+  Args:
+    layer: Layer object
+    x: ndarray tensor input data
+    w: ndarray tensor layer weights
+    b: ndarray tensor layer biases
+    grad_out: ndarray tensor gradient from the next layer
+  """
+  func = lambda params: layer.forward(x)
+  grad_w_num = eval_numerical_gradient(func, w, grad_out)
+  grad_b_num = eval_numerical_gradient(func, b, grad_out)
+  grads = layer.backward_params(grad_out)
+  grad_w = grads[0][1]
+  grad_b = grads[1][1]
+  print("Check weights:")
+  print("Relative error = ", rel_error(grad_w_num, grad_w))
+  print("Error norm = ", np.linalg.norm(grad_w_num - grad_w))
+  print("Check biases:")
+  print("Relative error = ", rel_error(grad_b_num, grad_b))
+  print("Error norm = ", np.linalg.norm(grad_b_num - grad_b))
+
 print("Convolution")
 x = np.random.randn(4, 3, 5, 5)
 grad_out = np.random.randn(4, 2, 5, 5)
 conv = layers.Convolution(x, 2, 3, "conv1")
-grad_check(conv, x, grad_out)
+print("Check grad wrt input")
+check_grad_inputs(conv, x, grad_out)
+print("Check grad wrt params")
+check_grad_params(conv, x, conv.weights, conv.bias, grad_out)
 
 print("\nMaxPooling")
 x = np.random.randn(5, 4, 8, 8)
 grad_out = np.random.randn(5, 4, 4, 4)
 pool = layers.MaxPooling(x, "pool", 2, 2)
-grad_check(pool, x, grad_out)
+print("Check grad wrt input")
+check_grad_inputs(pool, x, grad_out)
 
 print("\nReLU")
 x = np.random.randn(4, 3, 5, 5)
 grad_out = np.random.randn(4, 3, 5, 5)
 relu = layers.ReLU(x, "relu")
-grad_check(relu, x, grad_out)
+print("Check grad wrt input")
+check_grad_inputs(relu, x, grad_out)
 
 print("\nFC")
 x = np.random.randn(20, 40)
 grad_out = np.random.randn(20, 30)
 fc = layers.FC(x, 30, "fc")
-grad_check(fc, x, grad_out)
+print("Check grad wrt input")
+check_grad_inputs(fc, x, grad_out)
+print("Check grad wrt params")
+check_grad_params(fc, x, fc.weights, fc.bias, grad_out)
 
 print("\nSoftmaxCrossEntropyWithLogits")
 x = np.random.randn(50, 20)
