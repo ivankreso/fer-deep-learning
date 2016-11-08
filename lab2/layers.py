@@ -271,7 +271,7 @@ class SoftmaxCrossEntropyWithLogits():
       x: ndarray of shape (N, num_classes).
       y: ndarray of shape (N, num_classes).
     Returns:
-      Scalar, average value of the loss over N examples.
+      Scalar, sum of losses over N examples.
     """
     # TODO
     pass
