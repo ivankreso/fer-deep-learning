@@ -272,6 +272,9 @@ class SoftmaxCrossEntropyWithLogits():
       y: ndarray of shape (N, num_classes).
     Returns:
       Scalar, average loss over N examples.
+      It is better to compute average loss here instead of just sum
+      because then learning rate and weight decay won't depend on batch size.
+
     """
     # TODO
     pass
@@ -284,6 +287,7 @@ class SoftmaxCrossEntropyWithLogits():
     Returns:
       Gradient with respect to the x, ndarray of shape (N, num_classes).
     """
+    # Hint: don't forget that we took the average in the forward pass
     # TODO
     pass
 
@@ -294,6 +298,7 @@ class L2Regularizer():
     Args:
       weights: parameters which will be regularizerized
       weight_decay: lambda, regularization strength
+      name: layer name
     """
     # this is still a reference to original tensor so don't change self.weights
     self.weights = weights
