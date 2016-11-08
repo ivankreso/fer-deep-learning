@@ -40,11 +40,13 @@ inputs = np.random.randn(config['batch_size'], 1, 28, 28)
 net += [layers.Convolution(inputs, 16, 5, "conv1")]
 net += [layers.MaxPooling(net[-1], "pool1")]
 net += [layers.ReLU(net[-1], "relu1")]
-net += [layers.Convolution(net[-1], 32, 5, "conv3")]
+net += [layers.Convolution(net[-1], 32, 5, "conv2")]
+net += [layers.MaxPooling(net[-1], "pool2")]
+net += [layers.ReLU(net[-1], "relu2")]
 # out = 7x7
-net += [layers.Flatten(net[-1], "flatten4")]
-net += [layers.FC(net[-1], 512, "fc5")]
-net += [layers.ReLU(net[-1], "relu5")]
+net += [layers.Flatten(net[-1], "flatten3")]
+net += [layers.FC(net[-1], 512, "fc3")]
+net += [layers.ReLU(net[-1], "relu3")]
 net += [layers.FC(net[-1], 10, "logits")]
 
 loss = layers.SoftmaxCrossEntropyWithLogits()
