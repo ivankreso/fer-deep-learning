@@ -271,7 +271,7 @@ class SoftmaxCrossEntropyWithLogits():
       x: ndarray of shape (N, num_classes).
       y: ndarray of shape (N, num_classes).
     Returns:
-      Scalar, sum of losses over N examples.
+      Scalar, average loss over N examples.
     """
     # TODO
     pass
@@ -290,6 +290,12 @@ class SoftmaxCrossEntropyWithLogits():
 
 class L2Regularizer():
   def __init__(self, weights, weight_decay, name):
+    """
+    Args:
+      weights: parameters which will be regularizerized
+      weight_decay: lambda, regularization strength
+    """
+    # this is still a reference to original tensor so don't change self.weights
     self.weights = weights
     self.weight_decay = weight_decay
     self.name = name

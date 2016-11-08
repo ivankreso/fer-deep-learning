@@ -15,11 +15,8 @@ config = {}
 config['max_epochs'] = 8
 config['batch_size'] = 50
 config['save_dir'] = SAVE_DIR
-#config['weight_decay'] = 1e-3
-config['weight_decay'] = 1e-2
-config['lr_policy'] = {1:{'lr':1e-2}, 3:{'lr':1e-3}, 5:{'lr':1e-4}, 7:{'lr':1e-5}}
-#config['lr_policy'] = {1:{'lr':1e-3}, 3:{'lr':1e-3}, 5:{'lr':1e-4}, 7:{'lr':1e-5}}
-#config['lr_policy'] = {1:{'lr':1e-4}, 3:{'lr':1e-4}, 5:{'lr':1e-4}, 7:{'lr':1e-5}}
+config['weight_decay'] = 1e-3
+config['lr_policy'] = {1:{'lr':1e-1}, 3:{'lr':1e-2}, 5:{'lr':1e-3}, 7:{'lr':1e-4}}
 
 #np.random.seed(100) 
 np.random.seed(int(time.time() * 1e6) % 2**31)
@@ -42,7 +39,7 @@ weight_decay = config['weight_decay']
 net = []
 regularizers = []
 inputs = np.random.randn(config['batch_size'], 1, 28, 28)
-net += [layers.Convolution(inputs, 32, 3, "conv1")]
+net += [layers.Convolution(inputs, 16, 3, "conv1")]
 regularizers += [layers.L2Regularizer(net[-1].weights, weight_decay, 'conv1_l2reg')]
 net += [layers.MaxPooling(net[-1], "pool1")]
 net += [layers.ReLU(net[-1], "relu1")]

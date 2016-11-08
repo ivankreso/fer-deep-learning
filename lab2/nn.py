@@ -82,7 +82,7 @@ def train(train_x, train_y, valid_x, valid_y, net, loss, config):
       batch_x = train_x[i*batch_size:(i+1)*batch_size, :]
       batch_y = train_y[i*batch_size:(i+1)*batch_size, :]
       logits = forward_pass(net, batch_x)
-      loss_val = loss.forward(logits, batch_y) / batch_size
+      loss_val = loss.forward(logits, batch_y)
       # compute classification accuracy
       yp = np.argmax(logits, 1)
       yt = np.argmax(batch_y, 1)
@@ -121,7 +121,7 @@ def evaluate(name, x, y, net, loss, config):
     loss_avg += loss_val
     #print("step %d / %d, loss = %.2f" % (i*batch_size, num_examples, loss_val / batch_size))
   valid_acc = cnt_correct / num_examples * 100
-  loss_avg /= num_examples
+  loss_avg /= num_batches
   print(name + " accuracy = %.2f" % valid_acc)
   print(name + " avg loss = %.2f\n" % loss_avg)
 
