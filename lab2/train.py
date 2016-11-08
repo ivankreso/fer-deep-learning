@@ -43,7 +43,7 @@ net += [layers.ReLU(net[-1], "relu1")]
 net += [layers.Convolution(net[-1], 32, 5, "conv3")]
 # out = 7x7
 net += [layers.Flatten(net[-1], "flatten4")]
-net += [layers.FC(net[-1], 64, "fc5")]
+net += [layers.FC(net[-1], 512, "fc5")]
 net += [layers.ReLU(net[-1], "relu5")]
 net += [layers.FC(net[-1], 10, "logits")]
 
