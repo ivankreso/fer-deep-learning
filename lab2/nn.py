@@ -65,6 +65,7 @@ def train(train_x, train_y, valid_x, valid_y, net, loss, config):
   max_epochs = config['max_epochs']
   save_dir = config['save_dir']
   num_examples = train_x.shape[0]
+  assert num_examples % batch_size == 0
   num_batches = num_examples // batch_size
   for epoch in range(1, max_epochs+1):
     if epoch in lr_policy:
@@ -105,6 +106,7 @@ def evaluate(name, x, y, net, loss, config):
   print("\nRunning evaluation: ", name)
   batch_size = config['batch_size']
   num_examples = x.shape[0]
+  assert num_examples % batch_size == 0
   num_batches = num_examples // batch_size
   cnt_correct = 0
   loss_avg = 0
