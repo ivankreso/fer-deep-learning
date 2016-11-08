@@ -75,7 +75,7 @@ y[:,0] = 1
 loss = layers.SoftmaxCrossEntropyWithLogits()
 grad_x_num = eval_numerical_gradient(lambda x: loss.forward(x, y), x, 1)
 out = loss.forward(x, y)
-grad_x = loss.backward_inputs()
+grad_x = loss.backward_inputs(x, y)
 print("Relative error = ", rel_error(grad_x_num, grad_x))
 print("Error norm = ", np.linalg.norm(grad_x_num - grad_x))
 
