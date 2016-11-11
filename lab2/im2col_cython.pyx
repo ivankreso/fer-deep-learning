@@ -1,4 +1,27 @@
-# python setup.py build_ext --inplace
+# The MIT License (MIT)
+# 
+# Copyright (c) 2015 Andrej Karpathy
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# build with:
+# python setup_cython.py build_ext --inplace
 
 import numpy as np
 cimport numpy as np
@@ -91,33 +114,3 @@ cdef int col2im_cython_inner(np.ndarray[DTYPE_t, ndim=2] cols,
                             x_padded[i, c, stride * yy + ii, stride * xx + jj] += cols[row, col]
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef col2im_6d_cython_inner(np.ndarray[DTYPE_t, ndim=6] cols,
-                            np.ndarray[DTYPE_t, ndim=4] x_padded,
-                            int N, int C, int H, int W, int HH, int WW,
-                            int out_h, int out_w, int pad, int stride):
-
-    cdef int c, hh, ww, n, h, w
-    for n in range(N):
-        for c in range(C):
-            for hh in range(HH):
-                for ww in range(WW):
-                    for h in range(out_h):
-                        for w in range(out_w):
-                            x_padded[n, c, stride * h + hh, stride * w + ww] += cols[c, hh, ww, n, h, w]
-    
-
-def col2im_6d_cython(np.ndarray[DTYPE_t, ndim=6] cols, int N, int C, int H, int W,
-        int HH, int WW, int pad, int stride):
-    cdef np.ndarray x = np.empty((N, C, H, W), dtype=cols.dtype)
-    cdef int out_h = (H + 2 * pad - HH) / stride + 1
-    cdef int out_w = (W + 2 * pad - WW) / stride + 1
-    cdef np.ndarray[DTYPE_t, ndim=4] x_padded = np.zeros((N, C, H + 2 * pad, W + 2 * pad),
-                                                  dtype=cols.dtype)
-
-    col2im_6d_cython_inner(cols, x_padded, N, C, H, W, HH, WW, out_h, out_w, pad, stride)
-
-    if pad > 0:
-        return x_padded[:, :, pad:-pad, pad:-pad]
-    return x_padded 

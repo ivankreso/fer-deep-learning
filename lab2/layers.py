@@ -9,7 +9,6 @@ zero_init = np.zeros
 
 def variance_scaling_initializer(shape, fan_in, factor=2.0, seed=None):
   sigma = np.sqrt(factor / fan_in)
-  #x = stats.truncnorm(-max_val*sigma, max_val*sigma, loc=0, scale=sigma)
   return stats.truncnorm(-2, 2, loc=0, scale=sigma).rvs(shape)
 
 
@@ -49,7 +48,6 @@ class Layer(metaclass = ABCMeta):
     pass
 
 
-
 # -- CONVOLUTION LAYER --
 class Convolution(Layer):
   "N-dimensional convolution layer"
@@ -57,8 +55,6 @@ class Convolution(Layer):
   def __init__(self, input_layer, num_filters, kernel_size, name, padding='SAME',
                weights_initializer_fn=variance_scaling_initializer,
                bias_initializer_fn=zero_init):
-    # shape of the output is [num_filters, height, width]
-
     self.input_shape = input_layer.shape
     N, C, H, W = input_layer.shape
     self.C = C
@@ -71,21 +67,18 @@ class Convolution(Layer):
     self.padding = padding
     if padding == 'SAME':
       self.shape = (N, num_filters, H, W)
+      self.pad = (kernel_size - 1) // 2
     else:
       self.shape = (N, num_filters, H - kernel_size + 1, W - kernel_size + 1)
+      self.pad = 0
 
     fan_in = C * kernel_size**2
     self.weights = weights_initializer_fn([num_filters, kernel_size**2 * C], fan_in)
-    #print(self.weights.shape)
     self.bias = bias_initializer_fn([num_filters])
-    self.im2col_data = np.zeros([kernel_size**2 * C, N * H * W])
-    self.im2col_data_backward = np.zeros([kernel_size**2 * self.num_filters, N * H * W])
-    self.pad = (kernel_size - 1) // 2
     # this implementation doesn't support strided convolutions
     self.stride = 1
     self.name = name
     self.has_params = True
-
 
   def forward(self, x):
     k = self.kernel_size
@@ -96,29 +89,23 @@ class Convolution(Layer):
     return out.transpose(3, 0, 1, 2)
 
   def backward_inputs(self, grad_out):
-    pad = self.pad
     # nice trick from CS231n, backward pass can be done with just matrix mul and col2im
     grad_out = grad_out.transpose(1, 2, 3, 0).reshape(self.num_filters, -1)
     grad_x_cols = self.weights.T.dot(grad_out)
     N, C, H, W = self.input_shape
     k = self.kernel_size
-    grad_x = col2im_cython(grad_x_cols, N, C, H, W, k, k, pad, self.stride)
+    grad_x = col2im_cython(grad_x_cols, N, C, H, W, k, k, self.pad, self.stride)
     return grad_x
-    #return grad_x
 
   def backward_params(self, grad_out):
     grad_bias = np.sum(grad_out, axis=(0, 2, 3))
     grad_out = grad_out.transpose(1, 2, 3, 0).reshape(self.num_filters, -1)
-    #grad_weights = grad_out.dot(self.x_cols.T).reshape(self.weights.shape)
     grad_weights = grad_out.dot(self.x_cols.T).reshape(self.weights.shape)
-    #weight_decay = 1e-1
-    #grad_weights += weight_decay * self.weights
     return [[self.weights, grad_weights], [self.bias, grad_bias], self.name]
 
 
 class MaxPooling(Layer):
   def __init__(self, input_layer, name, pool_size=2, stride=2):
-    #self.num_inputs = self.input_shape[0]
     self.name = name
     self.input_shape = input_layer.shape
     N, C, H, W = self.input_shape
@@ -128,17 +115,13 @@ class MaxPooling(Layer):
     assert pool_size == stride, 'Invalid pooling params'
     assert H % pool_size == 0
     assert W % pool_size == 0
-    self.im2col_data = np.zeros([N * H * W, pool_size**2 * C])
-    self.name = name
-    self.im2col_grads = np.array([1])
-    self.grad_inputs = np.zeros(self.input_shape)
     self.has_params = False
 
   def forward(self, x):
     N, C, H, W = x.shape
     self.input_shape = x.shape
     self.x = x.reshape(N, C, H // self.pool_size, self.pool_size,
-                            W // self.pool_size, self.pool_size)
+                       W // self.pool_size, self.pool_size)
     self.out = self.x.max(axis=3).max(axis=4)
     return self.out.copy()
 
@@ -149,8 +132,6 @@ class MaxPooling(Layer):
     dout_newaxis = grad_out[:, :, :, np.newaxis, :, np.newaxis]
     dout_broadcast, _ = np.broadcast_arrays(dout_newaxis, grad_x)
     grad_x[mask] = dout_broadcast[mask]
-    print(np.sum(mask, axis=(3, 5), keepdims=True))
-    print(np.sum(mask, axis=(3, 5), keepdims=True).shape)
     grad_x /= np.sum(mask, axis=(3, 5), keepdims=True)
     grad_x = grad_x.reshape(self.input_shape)
     return grad_x
