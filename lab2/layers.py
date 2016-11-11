@@ -44,6 +44,7 @@ class Layer(metaclass = ABCMeta):
     Returns:
       Gradient of the loss with respect to all the parameters of the layer as a list
       [[w0, g0], ..., [wk, gk], self.name] where w are parameter weights and g their gradient.
+      Note that wk and gk must have the same shape.
     """
     pass
 
@@ -66,9 +67,11 @@ class Convolution(Layer):
 
     self.padding = padding
     if padding == 'SAME':
+      # with zero padding
       self.shape = (N, num_filters, H, W)
       self.pad = (kernel_size - 1) // 2
     else:
+      # without padding
       self.shape = (N, num_filters, H - kernel_size + 1, W - kernel_size + 1)
       self.pad = 0
 
@@ -120,9 +123,11 @@ class MaxPooling(Layer):
   def forward(self, x):
     N, C, H, W = x.shape
     self.input_shape = x.shape
+    # with this clever reshaping we can implement pooling where pool_size == stride
     self.x = x.reshape(N, C, H // self.pool_size, self.pool_size,
                        W // self.pool_size, self.pool_size)
     self.out = self.x.max(axis=3).max(axis=4)
+    # if you are returning class member be sure to return a copy
     return self.out.copy()
 
   def backward_inputs(self, grad_out):
@@ -131,7 +136,11 @@ class MaxPooling(Layer):
     mask = (self.x == out_newaxis)
     dout_newaxis = grad_out[:, :, :, np.newaxis, :, np.newaxis]
     dout_broadcast, _ = np.broadcast_arrays(dout_newaxis, grad_x)
+    # this is almost the same as the real backward pass
     grad_x[mask] = dout_broadcast[mask]
+    # in the very rare case that more then one input have the same max value
+    # we can aprox the real gradient routing by evenly distributing across multiple inputs
+    # but in almost all cases this sum will be 1
     grad_x /= np.sum(mask, axis=(3, 5), keepdims=True)
     grad_x = grad_x.reshape(self.input_shape)
     return grad_x
@@ -164,7 +173,10 @@ class FC(Layer):
                bias_initializer_fn=zero_init):
     """
     Args:
-      input_layer
+      input_layer: layer below
+      num_outputs: number of neurons in this layer
+      weights_initializer_fn: initializer function for weights,
+      bias_initializer_fn: initializer function for biases
     """
 
     self.input_shape = input_layer.shape
