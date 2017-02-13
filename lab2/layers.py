@@ -88,7 +88,7 @@ class Convolution(Layer):
     self.x_cols = im2col_cython(x, k, k, self.pad, self.stride)
     res = self.weights.dot(self.x_cols) + self.bias.reshape(-1, 1)
     N, C, H, W = x.shape
-    out = res.reshape(self.num_filters, H, W, N)
+    out = res.reshape(self.num_filters, self.shape[2], self.shape[3], N)
     return out.transpose(3, 0, 1, 2)
 
   def backward_inputs(self, grad_out):
