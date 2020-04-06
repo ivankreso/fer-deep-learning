@@ -1,15 +1,15 @@
 import time
+from pathlib import Path
 
 import numpy as np
-import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
+from torchvision.datasets import MNIST
 
+import data
 import nn
-
 import layers
 
-DATA_DIR = '/home/kivan/datasets/MNIST/'
-SAVE_DIR = "/home/kivan/source/fer/out/"
+DATA_DIR = Path(__file__).parent / 'datasets' / 'MNIST'
+SAVE_DIR = Path(__file__).parent / 'out'
 
 config = {}
 config['max_epochs'] = 8
@@ -20,20 +20,17 @@ config['lr_policy'] = {1:{'lr':1e-1}, 3:{'lr':1e-2}, 5:{'lr':1e-3}, 7:{'lr':1e-4
 
 #np.random.seed(100) 
 np.random.seed(int(time.time() * 1e6) % 2**31)
-dataset = input_data.read_data_sets(DATA_DIR, one_hot=True)
-train_x = dataset.train.images
-train_x = train_x.reshape([-1, 1, 28, 28])
-train_y = dataset.train.labels
-valid_x = dataset.validation.images
-valid_x = valid_x.reshape([-1, 1, 28, 28])
-valid_y = dataset.validation.labels
-test_x = dataset.test.images
-test_x = test_x.reshape([-1, 1, 28, 28])
-test_y = dataset.test.labels
+
+ds_train, ds_test = MNIST(DATA_DIR, train=True, download=True), MNIST(DATA_DIR, train=False)
+train_x = ds_train.data.reshape([-1, 1, 28, 28]).numpy().astype(np.float) / 255
+train_y = ds_train.targets.numpy()
+train_x, valid_x = train_x[:55000], train_x[55000:]
+train_y, valid_y = train_y[:55000], train_y[55000:]
+test_x = ds_test.data.reshape([-1, 1, 28, 28]).numpy().astype(np.float) / 255
+test_y = ds_test.targets.numpy()
 train_mean = train_x.mean()
-train_x -= train_mean
-valid_x -= train_mean
-test_x -= train_mean
+train_x, valid_x, test_x = (x - train_mean for x in (train_x, valid_x, test_x))
+train_y, valid_y, test_y = (data.dense_to_one_hot(y, 10) for y in (train_y, valid_y, test_y))
 
 weight_decay = config['weight_decay']
 net = []
@@ -59,4 +56,3 @@ loss = layers.RegularizedLoss(data_loss, regularizers)
 
 nn.train(train_x, train_y, valid_x, valid_y, net, loss, config)
 nn.evaluate("Test", test_x, test_y, net, loss, config)
-
